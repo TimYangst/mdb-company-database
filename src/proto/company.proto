@@ -1,0 +1,19 @@
+syntax = "proto2";
+
+package company;
+
+option java_package = "me.timyang.personal.company";
+option java_outer_classname = "CompanyProto";
+
+message Company {
+    optional string frdm = 1;
+    optional string name = 2;
+    optional string owner = 3;
+    optional string address = 4;
+    optional string count_code = 5;
+    optional string street_zone = 6;
+    optional string phone_number = 7;
+    optional string email = 8;
+    optional string zip = 9;
+}
+
