@@ -2,30 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="bbb140c4-6912-4ed2-9436-7162ab133a39" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/libraries/Maven__com_google_re2j_re2j_1_1.xml" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/proto-builds/me/timyang/personal/company/CompanyProto.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/proto-builds/me/timyang/personal/company/ItemProto.java" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/proto/item.proto" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/target/classes/me/timyang/personal/company/ItemProto$1.class" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/target/classes/me/timyang/personal/company/ItemProto$Item$1.class" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/target/classes/me/timyang/personal/company/ItemProto$Item$Builder.class" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/target/classes/me/timyang/personal/company/ItemProto$Item.class" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/target/classes/me/timyang/personal/company/ItemProto$ItemOrBuilder.class" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/target/classes/me/timyang/personal/company/ItemProto.class" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/target/classes/Main.class" afterPath="$PROJECT_DIR$/target/classes/Main.class" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/target/classes/me/timyang/personal/company/CompanyProto$1.class" afterPath="$PROJECT_DIR$/target/classes/me/timyang/personal/company/CompanyProto$1.class" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/target/classes/me/timyang/personal/company/CompanyProto$Company$1.class" afterPath="$PROJECT_DIR$/target/classes/me/timyang/personal/company/CompanyProto$Company$1.class" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/target/classes/me/timyang/personal/company/CompanyProto$Company$Builder.class" afterPath="$PROJECT_DIR$/target/classes/me/timyang/personal/company/CompanyProto$Company$Builder.class" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/target/classes/me/timyang/personal/company/CompanyProto$Company.class" afterPath="$PROJECT_DIR$/target/classes/me/timyang/personal/company/CompanyProto$Company.class" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/target/classes/me/timyang/personal/company/CompanyProto$CompanyOrBuilder.class" afterPath="$PROJECT_DIR$/target/classes/me/timyang/personal/company/CompanyProto$CompanyOrBuilder.class" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/target/classes/me/timyang/personal/company/CompanyProto.class" afterPath="$PROJECT_DIR$/target/classes/me/timyang/personal/company/CompanyProto.class" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/compiler.xml" afterPath="$PROJECT_DIR$/.idea/compiler.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/company.iml" afterPath="$PROJECT_DIR$/company.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pom.xml" afterPath="$PROJECT_DIR$/pom.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/main/java/Main.java" afterPath="$PROJECT_DIR$/src/main/java/Main.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/proto/company.proto" afterPath="$PROJECT_DIR$/src/proto/company.proto" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <ignored path="$PROJECT_DIR$/target/" />
@@ -81,7 +58,7 @@
         <entry file="file://$PROJECT_DIR$/.gitignore">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="38">
-              <caret line="2" column="14" lean-forward="false" selection-start-line="2" selection-start-column="14" selection-end-line="2" selection-end-column="14" />
+              <caret line="2" column="15" lean-forward="false" selection-start-line="2" selection-start-column="15" selection-end-line="2" selection-end-column="15" />
               <folding />
             </state>
           </provider>
@@ -1114,7 +1091,7 @@
     <entry file="file://$PROJECT_DIR$/.gitignore">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="38">
-          <caret line="2" column="14" lean-forward="false" selection-start-line="2" selection-start-column="14" selection-end-line="2" selection-end-column="14" />
+          <caret line="2" column="15" lean-forward="false" selection-start-line="2" selection-start-column="15" selection-end-line="2" selection-end-column="15" />
           <folding />
         </state>
       </provider>
