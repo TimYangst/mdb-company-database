@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Created by yt on 2017/4/9.
@@ -19,23 +21,25 @@ import java.util.*;
 
 
 public class Main {
+    private static Logger logger = Logger.getLogger(Main.class.getName());
 
-    @Option(name="company", usage="Company db file name")
+    @Option(name = "company", usage = "Company db file name")
     public String companyFile = "d:\\data\\2003.mdb";
 
-    @Option(name="company_table", usage="Company table name")
+    @Option(name = "company_table", usage = "Company table name")
     public String companyTableName = "qy03";
 
-    @Option(name="item", usage="Item db file name")
+    @Option(name = "item", usage = "Item db file name")
     public String itemFile = "d:\\data\\data200301.mdb";
 
-    @Option(name="item_table", usage="Item table name")
+    @Option(name = "item_table", usage = "Item table name")
     public String itemTableName = "data200301";
 
-    @Option(name="output_file", usage = "Output file name")
+    @Option(name = "output_file", usage = "Output file name")
     public String outputFile = "d:\\data\\result.mdb";
+    public static final Pattern PHONE_PATTERN = Pattern.compile("(\\d7\\d?)");
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         try {
             new Main().process();
         } catch (IOException e) {
@@ -43,7 +47,7 @@ public class Main {
         }
     }
 
-    private static void outputTable(Table table, String path) throws IOException{
+    private static void outputTable(Table table, String path) throws IOException {
         File outputFile = new File(path);
         FileWriter fileWriter = new FileWriter(outputFile);
         for (Column column : table.getColumns()) {
@@ -71,9 +75,15 @@ public class Main {
 
     private static List<CompanyProto.Company> readCompanies(Table companyTable) {
         List<CompanyProto.Company> result = new ArrayList<CompanyProto.Company>();
+        int count = 0;
         for (Row row : companyTable) {
             result.add(toCompanyProto(companyTable, row));
+            count++;
+            if (count % 100 == 0) {
+                logger.log(Level.INFO, String.format("Parsed %d companies.", count));
+            }
         }
+        logger.log(Level.INFO, String.format("Total parsed %d companies", count));
         return result;
     }
 
@@ -113,7 +123,7 @@ public class Main {
     private static List<CompanyProto.Item> readItems(Table itemTable) {
         List<CompanyProto.Item> result = new ArrayList<CompanyProto.Item>();
         for (Row row : itemTable) {
-            result.add( toItemProto(itemTable, row));
+            result.add(toItemProto(itemTable, row));
         }
         return result;
     }
@@ -168,13 +178,13 @@ public class Main {
         }
         return StringUtils.equals(email1, email2);
     }
+
     private boolean matchPhone(String phone1, String phone2) {
         if (StringUtils.isEmpty(phone1) || StringUtils.isEmpty(phone2)) {
             return false;
         }
-        Pattern pattern = Pattern.compile("(\\d7\\d?)");
-        Matcher matcher1 = pattern.matcher(phone1);
-        Matcher matcher2 = pattern.matcher(phone2);
+        Matcher matcher1 = PHONE_PATTERN.matcher(phone1);
+        Matcher matcher2 = PHONE_PATTERN.matcher(phone2);
         if (matcher1.matches() && matcher2.matches()) {
             return matcher1.group().contains(matcher2.group()) || matcher2.group().contains(matcher1.group());
         }
@@ -228,12 +238,17 @@ public class Main {
         Database outputDatabase = DatabaseBuilder.create(Database.FileFormat.V2003, new File(outputFile));
         try {
             companyDatabase = DatabaseBuilder.open(new File(companyFile));
-            itemDatabase =  DatabaseBuilder.open(new File(itemFile));
+            itemDatabase = DatabaseBuilder.open(new File(itemFile));
             Table companyTable = companyDatabase.getTable(companyTableName);
             Table itemTable = itemDatabase.getTable(itemTableName);
+            logger.log(Level.INFO, "Start initialize output database....");
             Table resultTable = initialTable(companyTable, itemTable, outputDatabase);
+            logger.log(Level.INFO, "Start reading companies output database....");
             List<CompanyProto.Company> companies = readCompanies(companyTable);
             Set<CompanyProto.Index> importedCompanies = new HashSet<>();
+            logger.log(Level.INFO, "Start analysis records...");
+            int recordCount = 0;
+            int mismatch = 0;
             for (Row itemRow : itemTable) {
                 boolean found = false;
                 CompanyProto.Item item = toItemProto(itemTable, itemRow);
@@ -242,18 +257,28 @@ public class Main {
                         importedCompanies.add(company.getIndex());
                         outputRow(company, item, resultTable);
                         found = true;
+                        logger.log(Level.INFO, String.format("Found match %s vs %s",
+                                company.getIndex().getName(), item.getIndex().getName()));
                         break;
                     }
                 }
                 if (!found) {
                     outputRow(null, item, resultTable);
+                    mismatch++;
+                }
+                recordCount++;
+                if (recordCount % 100 == 0) {
+                    logger.log(Level.INFO, String.format("Parsed %d records.", recordCount));
                 }
             }
+            int mismatchCompany = 0;
             for (CompanyProto.Company company : companies) {
                 if (!importedCompanies.contains(company.getIndex())) {
+                    mismatchCompany++;
                     outputRow(company, null, resultTable);
                 }
             }
+            logger.log(Level.INFO, String.format("Total parse records: %d, mismatch record: %d, mismatch company: %d", recordCount, mismatch, mismatchCompany));
         } catch (IOException | SQLException e) {
             e.printStackTrace();
         } finally {
