@@ -5,15 +5,25 @@ package company;
 option java_package = "me.timyang.personal.company";
 option java_outer_classname = "CompanyProto";
 
-message Company {
-    optional string frdm = 1;
-    optional string name = 2;
-    optional string owner = 3;
-    optional string address = 4;
-    optional string count_code = 5;
-    optional string street_zone = 6;
-    optional string phone_number = 7;
-    optional string email = 8;
-    optional string zip = 9;
+message Field {
+    optional string key = 1;
+    optional string value = 2;
 }
 
+message Index {
+    optional string name = 1;
+    optional string address = 2;
+    optional string phone = 3;
+    optional string email = 4;
+    optional string person = 5;
+}
+
+message Company {
+    optional Index index = 1;
+    repeated Field fields = 101;
+}
+
+message Item {
+    optional Index index = 1;
+    repeated Field fields = 101;
+}
