@@ -14,8 +14,6 @@ import java.util.logging.Logger;
 /**
  * Created by yt on 2017/4/9.
  */
-
-
 public class Main {
     private static Logger logger = Logger.getLogger(Main.class.getName());
 
