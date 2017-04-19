@@ -1,17 +1,13 @@
-import com.google.re2j.Matcher;
-import com.google.re2j.Pattern;
 import com.healthmarketscience.jackcess.*;
-import javafx.scene.control.Tab;
 import me.timyang.personal.company.CompanyProto;
-import org.apache.commons.lang.StringUtils;
 import org.kohsuke.args4j.Option;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -37,7 +33,10 @@ public class Main {
 
     @Option(name = "output_file", usage = "Output file name")
     public String outputFile = "d:\\data\\result.mdb";
-    public static final Pattern PHONE_PATTERN = Pattern.compile("(\\d7\\d?)");
+
+    private Database itemDatabase;
+    private Database outputDatabase;
+    private Database companyDatabase;
 
     public static void main(String[] args) {
         try {
@@ -47,118 +46,18 @@ public class Main {
         }
     }
 
-    private static void outputTable(Table table, String path) throws IOException {
-        File outputFile = new File(path);
-        FileWriter fileWriter = new FileWriter(outputFile);
-        for (Column column : table.getColumns()) {
-            fileWriter.write(column.getName());
-            fileWriter.write(",");
-        }
-        fileWriter.write("\n");
-        for (Row companyRow : table) {
-            for (Column column : table.getColumns()) {
-                if (companyRow.get(column.getName()) != null) {
-                    fileWriter.write(companyRow.get(column.getName()).toString());
-                }
-                fileWriter.write(",");
-            }
-            fileWriter.write("\n");
-        }
-        fileWriter.close();
-    }
-
-    private static void printTableNames(Database database) throws IOException {
-        for (String tableName : database.getTableNames()) {
-            System.out.print(tableName + ", ");
-        }
-    }
-
     private static List<CompanyProto.Company> readCompanies(Table companyTable) {
         List<CompanyProto.Company> result = new ArrayList<CompanyProto.Company>();
         int count = 0;
         for (Row row : companyTable) {
-            result.add(toCompanyProto(companyTable, row));
+            result.add(Utils.toCompanyProto(companyTable, row));
             count++;
             if (count % 100 == 0) {
-                logger.log(Level.INFO, String.format("Parsed %d companies.", count));
+                logger.info(String.format("Parsed %d companies.", count));
             }
         }
-        logger.log(Level.INFO, String.format("Total parsed %d companies", count));
+        logger.info(String.format("Total parsed %d companies", count));
         return result;
-    }
-
-    private static CompanyProto.Company toCompanyProto(Table companyTable, Row row) {
-        CompanyProto.Company.Builder companyBuilder = CompanyProto.Company.newBuilder();
-        CompanyProto.Index.Builder indexBuilder = CompanyProto.Index.newBuilder();
-        for (Column column : companyTable.getColumns()) {
-            Optional<String> value = (row.get(column.getName()) == null)
-                    ? Optional.<String>empty()
-                    : Optional.of(String.valueOf(row.get(column.getName())));
-            if (value.isPresent()) {
-                switch (column.getName()) {
-                    case "法人单位":
-                        indexBuilder.setName(value.get());
-                        break;
-                    case "地址":
-                        indexBuilder.setAddress(value.get());
-                        break;
-                    case "电话号码":
-                        indexBuilder.setPhone(value.get());
-                        break;
-                    case "邮件地址":
-                        indexBuilder.setEmail(value.get());
-                        break;
-                    case "法人":
-                        indexBuilder.setPerson(value.get());
-                        break;
-                }
-                companyBuilder.addFields(CompanyProto.Field.newBuilder()
-                        .setKey(column.getName()).setValue(value.get()));
-            }
-        }
-        companyBuilder.setIndex(indexBuilder);
-        return companyBuilder.build();
-    }
-
-    private static List<CompanyProto.Item> readItems(Table itemTable) {
-        List<CompanyProto.Item> result = new ArrayList<CompanyProto.Item>();
-        for (Row row : itemTable) {
-            result.add(toItemProto(itemTable, row));
-        }
-        return result;
-    }
-
-    private static CompanyProto.Item toItemProto(Table itemTable, Row row) {
-        CompanyProto.Item.Builder itemBuilder = CompanyProto.Item.newBuilder();
-        CompanyProto.Index.Builder indexBuilder = CompanyProto.Index.newBuilder();
-        for (Column column : itemTable.getColumns()) {
-            Optional<String> value = (row.get(column.getName()) == null)
-                    ? Optional.<String>empty()
-                    : Optional.of(String.valueOf(row.get(column.getName())));
-            if (value.isPresent()) {
-                switch (column.getName()) {
-                    case "经营单位":
-                        indexBuilder.setName(value.get());
-                        break;
-                    case "单位地址":
-                        indexBuilder.setAddress(value.get());
-                        break;
-                    case "电话":
-                        indexBuilder.setPhone(value.get());
-                        break;
-                    case "电子邮件":
-                        indexBuilder.setEmail(value.get());
-                        break;
-                    case "联系人":
-                        indexBuilder.setPerson(value.get());
-                        break;
-                }
-                itemBuilder.addFields(CompanyProto.Field.newBuilder()
-                        .setKey(column.getName()).setValue(value.get()));
-            }
-        }
-        itemBuilder.setIndex(indexBuilder);
-        return itemBuilder.build();
     }
 
     private static Table initialTable(Table companyTable, Table itemTable, Database outputDatabase) throws IOException, SQLException {
@@ -172,115 +71,86 @@ public class Main {
         return resultTable.toTable(outputDatabase);
     }
 
-    private boolean matchEmail(String email1, String email2) {
-        if (StringUtils.isEmpty(email1) || StringUtils.isEmpty(email2)) {
-            return false;
-        }
-        return StringUtils.equals(email1, email2);
-    }
 
-    private boolean matchPhone(String phone1, String phone2) {
-        if (StringUtils.isEmpty(phone1) || StringUtils.isEmpty(phone2)) {
-            return false;
-        }
-        Matcher matcher1 = PHONE_PATTERN.matcher(phone1);
-        Matcher matcher2 = PHONE_PATTERN.matcher(phone2);
-        if (matcher1.matches() && matcher2.matches()) {
-            return matcher1.group().contains(matcher2.group()) || matcher2.group().contains(matcher1.group());
-        }
-        return false;
-    }
 
-    private boolean matchName(String name1, String name2) {
-        if (StringUtils.isEmpty(name1) || StringUtils.isEmpty(name2)) {
-            return false;
-        }
-        return StringUtils.equals(name1, name2);
-    }
 
-    private boolean match(CompanyProto.Item item, CompanyProto.Company company) {
-        CompanyProto.Index itemIndex = item.getIndex();
-        CompanyProto.Index companyIndex = company.getIndex();
-        if (matchEmail(itemIndex.getEmail(), companyIndex.getEmail())) {
-            return true;
-        }
-        if (matchPhone(itemIndex.getPhone(), companyIndex.getPhone())) {
-            return true;
-        }
-//        if (matchPerson(itemIndex.getPerson()), companyIndex.getPerson()) {
-//            return true;
-//        }
-        if (matchName(itemIndex.getName(), companyIndex.getName())) {
-            return true;
-        }
-        return false;
+    private void initialize() throws IOException {
+        logger.info("Start program...");
+        logger.info(String.format("Company database: %s; Record database: %s", companyFile, itemFile));
+        logger.info(String.format("Output path: %s", outputFile));
+        logger.info("Connecting to database...");
+        companyDatabase = DatabaseBuilder.open(new File(companyFile));
+        itemDatabase = DatabaseBuilder.open(new File(itemFile));
+        outputDatabase = DatabaseBuilder.create(Database.FileFormat.V2003, new File(outputFile));
     }
-
-    private static void outputRow(CompanyProto.Company company, CompanyProto.Item item, Table table) throws IOException {
-        Map<String, Object> dataMap = new HashMap<>();
-        if (company != null) {
-            for (CompanyProto.Field field : company.getFieldsList()) {
-                dataMap.put(field.getKey(), field.getValue());
-            }
-        }
-        if (item != null) {
-            for (CompanyProto.Field field : item.getFieldsList()) {
-                dataMap.put(field.getKey(), field.getValue());
-            }
-        }
-        table.addRowFromMap(dataMap);
-    }
-
 
     public void process() throws IOException {
-        Database companyDatabase = null;
-        Database itemDatabase = null;
-        Database outputDatabase = DatabaseBuilder.create(Database.FileFormat.V2003, new File(outputFile));
         try {
-            companyDatabase = DatabaseBuilder.open(new File(companyFile));
-            itemDatabase = DatabaseBuilder.open(new File(itemFile));
-            Table companyTable = companyDatabase.getTable(companyTableName);
-            Table itemTable = itemDatabase.getTable(itemTableName);
-            logger.log(Level.INFO, "Start initialize output database....");
-            Table resultTable = initialTable(companyTable, itemTable, outputDatabase);
-            logger.log(Level.INFO, "Start reading companies output database....");
+            try {
+                initialize();
+            } catch (IOException e) {
+                logger.log(Level.SEVERE, "Initialize database failed.", e);
+                e.printStackTrace();
+                return;
+            }
+            logger.info("Finished init databases.");
+            Table companyTable = null;
+            Table itemTable = null;
+            Table resultTable = null;
+            try {
+                companyTable = companyDatabase.getTable(companyTableName);
+                itemTable = itemDatabase.getTable(itemTableName);
+                logger.info("Start initialize output database....");
+                resultTable = initialTable(companyTable, itemTable, outputDatabase);
+            } catch (IOException | SQLException e) {
+                logger.log(Level.SEVERE, "Initialize tables failed.", e);
+                e.printStackTrace();
+                return;
+            }
+            logger.info( "Start reading companies output database....");
             List<CompanyProto.Company> companies = readCompanies(companyTable);
-            Set<CompanyProto.Index> importedCompanies = new HashSet<>();
-            logger.log(Level.INFO, "Start analysis records...");
-            int recordCount = 0;
-            int mismatch = 0;
-            for (Row itemRow : itemTable) {
-                boolean found = false;
-                CompanyProto.Item item = toItemProto(itemTable, itemRow);
-                for (CompanyProto.Company company : companies) {
-                    if (match(item, company)) {
-                        importedCompanies.add(company.getIndex());
-                        outputRow(company, item, resultTable);
-                        found = true;
-                        logger.log(Level.INFO, String.format("Found match %s vs %s",
-                                company.getIndex().getName(), item.getIndex().getName()));
+
+            ExecutorService executor = Executors.newCachedThreadPool();
+
+            DataProducer dataProducer = new DataProducer(companyTable);
+            DataMatcher matcher = new DataMatcher(dataProducer.getItems(), companies, dataProducer.getRemains());
+            DatabaseWriter writer = new DatabaseWriter(resultTable, matcher.getResult());
+
+            executor.execute(dataProducer);
+            for (int i = 0; i < 64; i++) {
+                executor.execute(matcher.createWorker());
+            }
+            executor.execute(writer);
+
+            while (true) {
+                try {
+                    Thread.sleep(5000);
+                    if (dataProducer.isFinished() && dataProducer.getRemains().get() == 0) {
                         break;
                     }
-                }
-                if (!found) {
-                    outputRow(null, item, resultTable);
-                    mismatch++;
-                }
-                recordCount++;
-                if (recordCount % 100 == 0) {
-                    logger.log(Level.INFO, String.format("Parsed %d records.", recordCount));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    break;
                 }
             }
-            int mismatchCompany = 0;
-            for (CompanyProto.Company company : companies) {
-                if (!importedCompanies.contains(company.getIndex())) {
-                    mismatchCompany++;
-                    outputRow(company, null, resultTable);
+            logger.info("All records are processed to match, output mismatch companies...");
+            executor.execute(matcher.getMismatchCompaniesWriter());
+            while (true) {
+                try {
+                    Thread.sleep(5000);
+                    if (matcher.isFinished() && matcher.getResult().isEmpty()) {
+                        Thread.sleep(500);
+                        break;
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
-            logger.log(Level.INFO, String.format("Total parse records: %d, mismatch record: %d, mismatch company: %d", recordCount, mismatch, mismatchCompany));
-        } catch (IOException | SQLException e) {
-            e.printStackTrace();
+            logger.info("All records are written....");
+            logger.info( String.format(
+                    "Total parse records: %d, mismatch record: %d, mismatch company: %d",
+                    matcher.getProcessedItems(), matcher.getMismatchItems(), matcher.getMismatchCompanies()));
+            logger.info(String.format("Output %d rows", writer.getOutputCount()));
         } finally {
             if (companyDatabase != null) {
                 companyDatabase.close();
